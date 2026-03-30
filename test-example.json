@@ -1,0 +1,29 @@
+{
+  "steps": [
+    {
+      "action": "screenshot",
+      "name": "initial_state"
+    },
+    {
+      "action": "openurl",
+      "url": "https://github.com",
+      "wait": 3000
+    },
+    {
+      "action": "screenshot",
+      "name": "github_loaded"
+    },
+    {
+      "action": "wait",
+      "wait": 2000
+    },
+    {
+      "action": "validate",
+      "expected": "screen_changed"
+    },
+    {
+      "action": "screenshot",
+      "name": "final_state"
+    }
+  ]
+}

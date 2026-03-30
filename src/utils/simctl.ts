@@ -10,7 +10,15 @@ export class Simctl {
    */
   static async exec(args: string[]): Promise<SimctlResult> {
     try {
-      const command = `xcrun simctl ${args.join(' ')}`;
+      // Escape each argument properly for shell execution
+      const escapedArgs = args.map(arg => {
+        if (arg.includes(' ') || arg.includes('(') || arg.includes(')') || arg.includes('"') || arg.includes("'")) {
+          return `"${arg.replace(/"/g, '\\"')}"`;
+        }
+        return arg;
+      });
+
+      const command = `xcrun simctl ${escapedArgs.join(' ')}`;
       const { stdout, stderr } = await execAsync(command);
 
       return {

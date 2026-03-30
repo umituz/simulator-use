@@ -7,6 +7,7 @@ import * as launchCmd from './commands/launch.js';
 import * as terminateCmd from './commands/terminate.js';
 import * as openurlCmd from './commands/openurl.js';
 import * as statusCmd from './commands/status.js';
+import * as testCmd from './commands/test.js';
 export function createCLI() {
     const program = new Command();
     program
@@ -53,6 +54,17 @@ export function createCLI() {
         .command('status')
         .description('Show current simulator status')
         .action(statusCmd.status);
+    // Test command
+    program
+        .command('test')
+        .description('Run automated tests with organized results')
+        .option('--name <testName>', 'Test name')
+        .option('--device <device>', 'Target device')
+        .option('--boot', 'Boot device before test')
+        .option('--auto-fix', 'Enable automatic error fixing')
+        .option('--steps <file>', 'Test steps JSON file')
+        .option('--crud <file>', 'CRUD test data JSON file')
+        .action(testCmd.test);
     return program;
 }
 //# sourceMappingURL=cli.js.map
