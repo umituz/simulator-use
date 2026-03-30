@@ -54,11 +54,9 @@ export class TestResultManager {
    * Generate unique session ID
    */
   static generateSessionId(testName: string): string {
-    const date = new Date();
-    const dateStr = date.toISOString().replace(/[:.]/g, '-').split('T')[0];
-    const timeStr = date.toTimeString().replace(/[:\s]/g, '-');
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').replace('T', '_');
     const safeName = testName.replace(/\s+/g, '-').toLowerCase();
-    return `${dateStr}_${timeStr}_${safeName}`;
+    return `${timestamp}_${safeName}`;
   }
 
   /**
