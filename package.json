@@ -1,6 +1,6 @@
 {
   "name": "@umituz/simulator-use",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Browser-use for iOS simulators - Control iOS simulators from terminal with simple commands",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
