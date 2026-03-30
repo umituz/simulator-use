@@ -37,6 +37,14 @@ export declare class Simctl {
      */
     static openUrl(url: string, device?: string): Promise<void>;
     /**
+     * Tap at coordinates
+     */
+    static tap(x: number, y: number, device?: string): Promise<void>;
+    /**
+     * Swipe from coordinates to coordinates
+     */
+    static swipe(x1: number, y1: number, x2: number, y2: number, device?: string): Promise<void>;
+    /**
      * List installed apps
      */
     static listApps(device?: string): Promise<AppInfo[]>;

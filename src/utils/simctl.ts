@@ -150,6 +150,28 @@ export class Simctl {
   }
 
   /**
+   * Tap at coordinates
+   */
+  static async tap(x: number, y: number, device?: string): Promise<void> {
+    const target = device || 'booted';
+    const result = await this.exec(['io', target, 'tap', x.toString(), y.toString()]);
+    if (!result.success) {
+      throw new Error(`Failed to tap: ${result.stderr}`);
+    }
+  }
+
+  /**
+   * Swipe from coordinates to coordinates
+   */
+  static async swipe(x1: number, y1: number, x2: number, y2: number, device?: string): Promise<void> {
+    const target = device || 'booted';
+    const result = await this.exec(['io', target, 'swipe', x1.toString(), y1.toString(), x2.toString(), y2.toString()]);
+    if (!result.success) {
+      throw new Error(`Failed to swipe: ${result.stderr}`);
+    }
+  }
+
+  /**
    * List installed apps
    */
   static async listApps(device?: string): Promise<AppInfo[]> {

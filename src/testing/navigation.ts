@@ -174,12 +174,44 @@ export class NavigationCoordinator {
           break;
 
         case 'tap':
-          // Will be implemented in Phase 2
-          return { success: false, output: '', error: 'Tap not yet implemented' };
+          if (step.coordinates) {
+            await simctl.tap(step.coordinates.x, step.coordinates.y);
+            if (step.wait) {
+              await this.delay(step.wait);
+            }
+            return { success: true, output: `Tapped at ${step.coordinates.x}, ${step.coordinates.y}` };
+          }
+          break;
 
         case 'swipe':
-          // Will be implemented in Phase 2
-          return { success: false, output: '', error: 'Swipe not yet implemented' };
+          if (step.coordinates && step.direction) {
+            const { x, y } = step.coordinates;
+            let x2 = x, y2 = y;
+
+            // Calculate swipe end coordinates based on direction
+            const distance = step.distance || 200;
+            switch (step.direction) {
+              case 'up':
+                y2 = y - distance;
+                break;
+              case 'down':
+                y2 = y + distance;
+                break;
+              case 'left':
+                x2 = x - distance;
+                break;
+              case 'right':
+                x2 = x + distance;
+                break;
+            }
+
+            await simctl.swipe(x, y, x2, y2);
+            if (step.wait) {
+              await this.delay(step.wait);
+            }
+            return { success: true, output: `Swiped ${step.direction} from (${x}, ${y}) to (${x2}, ${y2})` };
+          }
+          break;
 
         case 'validate':
           // Validation will be handled by caller
