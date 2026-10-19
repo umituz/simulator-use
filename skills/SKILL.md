@@ -34,10 +34,7 @@ Use this skill when you want to:
 ### Installation
 
 ```bash
-cd /Users/umituz/Desktop/github/umituz/apps/startups/simulator-use
-npm install
-npm run build
-npm link
+npm install -g @umituz/simulator-use
 ```
 
 ### Basic Usage
@@ -56,10 +53,10 @@ simulator-use status
 simulator-use screenshot ~/Desktop/test.png
 
 # Launch an app
-simulator-use launch com.umituz.aimusic
+simulator-use launch com.example.myapp
 
 # Terminate an app
-simulator-use terminate com.umituz.aimusic
+simulator-use terminate com.example.myapp
 
 # Open URL in Safari
 simulator-use openurl https://umituz.com
@@ -80,7 +77,7 @@ simulator-use list
 **Output:**
 ```
 Available iOS Simulators
-ℹ️  iOS 26.3 --
+ℹ️ iOS 26.3
   🟢 iPhone 13 Pro Max (7AC1C09A...)  # Booted
   ⚫ iPad Pro 12.9-inch (59E8E911...) # Shutdown
 ```
@@ -112,7 +109,7 @@ simulator-use status
 iOS Simulator Status
 📱 Device: iPhone 13 Pro Max
 ℹ️  UDID: 7AC1C09A-9A89-4C44-BF24-67A62B98A9ED
-ℹ️  Runtime: iOS 26.3 --
+ℹ️  Runtime: iOS 26.3
 ℹ️  State: Booted
 
 ✅ Simulator is running
@@ -130,7 +127,7 @@ simulator-use screenshot ./screenshots/test-1.png
 **Launch an app on the simulator**
 
 ```bash
-simulator-use launch com.umituz.aimusic
+simulator-use launch com.example.myapp
 simulator-use launch com.apple.mobilesafari
 ```
 
@@ -138,7 +135,7 @@ simulator-use launch com.apple.mobilesafari
 **Terminate a running app**
 
 ```bash
-simulator-use terminate com.umituz.aimusic
+simulator-use terminate com.example.myapp
 ```
 
 ### openurl
@@ -158,7 +155,7 @@ simulator-use openurl http://192.168.1.12:8080/  # Local dev server
 simulator-use boot "iPhone 13 Pro Max"
 
 # 2. Launch your app
-simulator-use launch com.umituz.aimusic
+simulator-use launch com.example.myapp
 
 # 3. Take screenshots for testing
 simulator-use screenshot before-tap.png
@@ -168,14 +165,14 @@ sleep 2
 simulator-use screenshot after-tap.png
 
 # 5. Terminate when done
-simulator-use terminate com.umituz.aimusic
+simulator-use terminate com.example.myapp
 ```
 
 ### Local Web Testing
 
 ```bash
 # 1. Start your local dev server
-cd web-melodia && npm run dev &
+cd my-web-app && npm run dev &
 
 # 2. Boot simulator
 simulator-use boot "iPhone 13 Pro Max"
@@ -203,14 +200,14 @@ for device in "${DEVICES[@]}"; do
   simulator-use boot "$device"
 
   # Launch app
-  simulator-use launch com.umituz.aimusic
+  simulator-use launch com.example.myapp
 
   # Wait and capture
   sleep 3
   simulator-use screenshot "${device// /-}-launch.png"
 
   # Cleanup
-  simulator-use terminate com.umituz.aimusic
+  simulator-use terminate com.example.myapp
   simulator-use shutdown "$device"
 done
 ```
@@ -230,18 +227,14 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Setup Simulator-Use
-        run: |
-          cd tools/simulator-use
-          npm install
-          npm run build
-          npm link
+        run: npm install -g @umituz/simulator-use
 
       - name: Boot Simulator
         run: simulator-use boot "iPhone 13 Pro Max"
 
       - name: Run App Tests
         run: |
-          simulator-use launch com.umituz.aimusic
+          simulator-use launch com.example.myapp
           sleep 5
           simulator-use screenshot test-results.png
 
@@ -325,7 +318,7 @@ simulator-use list
 simulator-use boot "iPhone 13 Pro Max"
 simulator-use status
 simulator-use screenshot ~/Desktop/test.png
-simulator-use launch com.umituz.aimusic
+simulator-use launch com.example.myapp
 ```
 
 ## Best Practices
@@ -374,13 +367,10 @@ npm run build
 
 - **macOS Only** - xcrun simctl requires macOS
 - **Xcode Required** - Must have Xcode installed
-- **No UI Automation** - No tap/swipe in Phase 1 (planned for Phase 2)
 - **Single Device** - Commands target first booted device by default
 
-## Future Features (Phase 2)
+## Future Features
 
-- 🎯 **Tap Gestures** - Tap at coordinates
-- 👆 **Swipe Gestures** - Swipe directions
 - ⌨️ **Text Input** - Type text into focused elements
 - ⏱️ **Wait Commands** - Wait for elements/conditions
 - 📝 **Record/Playback** - Script automation

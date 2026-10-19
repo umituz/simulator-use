@@ -1,68 +1,52 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
-const execAsync = promisify(exec);
+import { execa } from 'execa';
 export class Simctl {
     /**
-     * Execute xcrun simctl command
+     * Execute xcrun simctl command.
+     * Arguments are passed as an array without a shell, so spaces, quotes
+     * and shell metacharacters in device names, paths and URLs are safe.
      */
     static async exec(args) {
-        try {
-            // Escape each argument properly for shell execution
-            const escapedArgs = args.map(arg => {
-                if (arg.includes(' ') || arg.includes('(') || arg.includes(')') || arg.includes('"') || arg.includes("'")) {
-                    return `"${arg.replace(/"/g, '\\"')}"`;
-                }
-                return arg;
-            });
-            const command = `xcrun simctl ${escapedArgs.join(' ')}`;
-            const { stdout, stderr } = await execAsync(command);
-            return {
-                success: true,
-                stdout: stdout.trim(),
-                stderr: stderr.trim(),
-                exitCode: 0
-            };
-        }
-        catch (error) {
-            return {
-                success: false,
-                stdout: error.stdout || '',
-                stderr: error.stderr || error.message,
-                exitCode: error.code || 1
-            };
-        }
+        const result = await execa('xcrun', ['simctl', ...args], { reject: false });
+        return {
+            success: !result.failed,
+            stdout: (result.stdout ?? '').trim(),
+            stderr: (result.stderr || result.originalMessage || result.message || '').trim(),
+            exitCode: result.exitCode ?? 1
+        };
     }
     /**
      * List all available devices
      */
     static async listDevices() {
-        const result = await this.exec(['list', 'devices', 'available']);
+        const result = await this.exec(['list', 'devices', 'available', '--json']);
         if (!result.success) {
             throw new Error(`Failed to list devices: ${result.stderr}`);
         }
+        const parsed = JSON.parse(result.stdout);
         const devices = [];
-        const lines = result.stdout.split('\n');
-        let currentRuntime = '';
-        for (const line of lines) {
-            // Parse runtime headers
-            if (line.includes('--') && line.includes('iOS')) {
-                currentRuntime = line.replace('--', '').trim();
-                continue;
-            }
-            // Parse device lines
-            const deviceMatch = line.match(/(.+?)\s+\(([A-F0-9-]+)\)\s+\((.+?)\)/);
-            if (deviceMatch) {
-                const [, name, udid, state] = deviceMatch;
+        for (const [runtime, runtimeDevices] of Object.entries(parsed.devices)) {
+            for (const device of runtimeDevices) {
                 devices.push({
-                    name: name.trim(),
-                    udid,
-                    state: state,
-                    runtime: currentRuntime,
-                    isAvailable: true
+                    name: device.name,
+                    udid: device.udid,
+                    state: device.state,
+                    runtime: Simctl.formatRuntimeName(runtime),
+                    isAvailable: device.isAvailable
                 });
             }
         }
         return devices;
+    }
+    /**
+     * Turn "com.apple.CoreSimulator.SimRuntime.iOS-26-5" into "iOS 26.5"
+     */
+    static formatRuntimeName(runtime) {
+        const clean = runtime.replace(/\s*--\s*$/, '').trim();
+        const match = clean.match(/^com\.apple\.CoreSimulator\.SimRuntime\.(\w+)-(.+)$/);
+        if (match) {
+            return `${match[1]} ${match[2].split('-').join('.')}`;
+        }
+        return clean;
     }
     /**
      * Get booted (running) device
@@ -120,14 +104,24 @@ export class Simctl {
         }
     }
     /**
-     * Open URL
+     * Open URL. Retries a few times because simctl regularly times out
+     * while SpringBoard is still settling right after boot.
      */
     static async openUrl(url, device) {
         const target = device || 'booted';
-        const result = await this.exec(['openurl', target, url]);
-        if (!result.success) {
-            throw new Error(`Failed to open URL: ${result.stderr}`);
+        const attempts = 3;
+        let lastError = '';
+        for (let attempt = 1; attempt <= attempts; attempt++) {
+            const result = await this.exec(['openurl', target, url]);
+            if (result.success) {
+                return;
+            }
+            lastError = result.stderr;
+            if (attempt < attempts) {
+                await new Promise(resolve => setTimeout(resolve, 3000));
+            }
         }
+        throw new Error(`Failed to open URL: ${lastError}`);
     }
     /**
      * Tap at coordinates

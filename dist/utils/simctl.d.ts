@@ -1,13 +1,19 @@
 import type { Device, AppInfo, SimctlResult } from '../types/index.js';
 export declare class Simctl {
     /**
-     * Execute xcrun simctl command
+     * Execute xcrun simctl command.
+     * Arguments are passed as an array without a shell, so spaces, quotes
+     * and shell metacharacters in device names, paths and URLs are safe.
      */
     static exec(args: string[]): Promise<SimctlResult>;
     /**
      * List all available devices
      */
     static listDevices(): Promise<Device[]>;
+    /**
+     * Turn "com.apple.CoreSimulator.SimRuntime.iOS-26-5" into "iOS 26.5"
+     */
+    private static formatRuntimeName;
     /**
      * Get booted (running) device
      */
@@ -33,7 +39,8 @@ export declare class Simctl {
      */
     static terminate(bundleId: string, device?: string): Promise<void>;
     /**
-     * Open URL
+     * Open URL. Retries a few times because simctl regularly times out
+     * while SpringBoard is still settling right after boot.
      */
     static openUrl(url: string, device?: string): Promise<void>;
     /**

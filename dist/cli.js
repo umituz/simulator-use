@@ -1,4 +1,5 @@
 import { Command } from 'commander';
+import { createRequire } from 'node:module';
 import * as listCmd from './commands/list.js';
 import * as bootCmd from './commands/boot.js';
 import * as shutdownCmd from './commands/shutdown.js';
@@ -8,12 +9,14 @@ import * as terminateCmd from './commands/terminate.js';
 import * as openurlCmd from './commands/openurl.js';
 import * as statusCmd from './commands/status.js';
 import * as testCmd from './commands/test.js';
+const require = createRequire(import.meta.url);
+const { version } = require('../package.json');
 export function createCLI() {
     const program = new Command();
     program
         .name('simulator-use')
         .description('Browser-use for iOS simulators - Control iOS simulators from terminal')
-        .version('0.1.0');
+        .version(version);
     // List command
     program
         .command('list')
