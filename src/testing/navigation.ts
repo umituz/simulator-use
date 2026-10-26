@@ -213,6 +213,16 @@ export class NavigationCoordinator {
           }
           break;
 
+        case 'type':
+          if (step.text) {
+            await simctl.typeText(step.text);
+            if (step.wait) {
+              await this.delay(step.wait);
+            }
+            return { success: true, output: `Typed ${step.text.length} characters` };
+          }
+          break;
+
         case 'validate':
           // Validation will be handled by caller
           return { success: true, output: 'Validation ready' };

@@ -54,8 +54,9 @@ export async function test(options: {
     testLogger.logStart(config.testName, device.name);
 
     // Run test based on mode
+    let stepErrors: Array<{ step: string; error: string }> = [];
     if (config.steps) {
-      await runStepByStepTest(config.steps as TestStepDefinition[], sessionId);
+      stepErrors = await runStepByStepTest(config.steps as TestStepDefinition[], sessionId);
     } else if (options.crud) {
       await runCRUDTest(options.crud, sessionId);
     } else {
@@ -65,19 +66,29 @@ export async function test(options: {
     // Finalize
     const endTime = new Date();
     const duration = endTime.getTime() - startTime.getTime();
+    const passed = stepErrors.length === 0;
 
-    testLogger.logCompletion('passed', duration, testLogger.getCurrentStep());
+    testLogger.logCompletion(passed ? 'passed' : 'failed', duration, testLogger.getCurrentStep());
 
     // Save logs
     await testLogger.saveLogs();
 
     // Update metadata
     await TestResultManager.updateMetadata(sessionId, {
-      status: 'completed',
+      status: passed ? 'completed' : 'failed',
       completedSteps: testLogger.getCurrentStep(),
       totalSteps: testLogger.getCurrentStep(),
-      errors: []
+      errors: stepErrors.map(e => ({
+        step: e.step,
+        error: e.error,
+        timestamp: new Date(),
+        resolved: false
+      }))
     });
+
+    if (!passed) {
+      process.exitCode = 1;
+    }
 
     testLogger.logSuccess(`Test completed. Session: ${sessionId}`);
     testLogger.logInfo(`Results saved to: ${TestResultManager.getSessionDir(sessionId)}`);
@@ -105,8 +116,14 @@ export async function test(options: {
 
 /**
  * Run step-by-step test
+ * Returns the list of failed steps so the caller can report an
+ * honest final status instead of always claiming success.
  */
-async function runStepByStepTest(steps: TestStepDefinition[], sessionId: string): Promise<void> {
+async function runStepByStepTest(
+  steps: TestStepDefinition[],
+  sessionId: string
+): Promise<Array<{ step: string; error: string }>> {
+  const errors: Array<{ step: string; error: string }> = [];
   testLogger.logInfo(`Running ${steps.length} steps...`);
 
   for (let i = 0; i < steps.length; i++) {
@@ -115,13 +132,20 @@ async function runStepByStepTest(steps: TestStepDefinition[], sessionId: string)
     const stepName = step.name || `Step ${stepNumber}`;
 
     // Build target string from step properties
-    const target = step.bundleId || step.url || JSON.stringify(step.coordinates || {});
+    const target = step.bundleId || step.url || step.text || JSON.stringify(step.coordinates || {});
     testLogger.logStep(stepNumber, step.action, target);
 
     try {
       // Execute step
       const result = await NavigationCoordinator.executeStep(step, Simctl);
-      const stepDef = { ...step, status: 'passed' };
+
+      if (!result.success) {
+        const message = result.error || 'Invalid step definition';
+        testLogger.logError(`Step ${stepNumber} failed: ${step.action}`, new Error(message));
+        testLogger.logWarning('Continuing to next step...');
+        errors.push({ step: `${stepNumber}: ${step.action}`, error: message });
+        continue;
+      }
 
       // Handle screenshot
       if (step.action === 'screenshot' && step.name) {
@@ -158,8 +182,11 @@ async function runStepByStepTest(steps: TestStepDefinition[], sessionId: string)
     } catch (error: any) {
       testLogger.logError(`Step ${stepNumber} failed`, error);
       testLogger.logWarning('Continuing to next step...');
+      errors.push({ step: `${stepNumber}: ${step.action}`, error: error.message });
     }
   }
+
+  return errors;
 }
 
 /**

@@ -84,10 +84,11 @@ export interface TestConfig {
  * Test Step Definition
  */
 export interface TestStepDefinition {
-  action: 'boot' | 'shutdown' | 'launch' | 'terminate' | 'screenshot' | 'openurl' | 'tap' | 'swipe' | 'wait' | 'validate';
+  action: 'boot' | 'shutdown' | 'launch' | 'terminate' | 'screenshot' | 'openurl' | 'tap' | 'swipe' | 'type' | 'wait' | 'validate';
   bundleId?: string;
   url?: string;
   coordinates?: { x: number; y: number };
+  text?: string;
   wait?: number;
   name?: string;
   expected?: string;

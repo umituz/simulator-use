@@ -1,4 +1,5 @@
 import { execa } from 'execa';
+import { HID } from './hid.js';
 import type { Device, AppInfo, SimctlResult } from '../types/index.js';
 
 export class Simctl {
@@ -150,25 +151,38 @@ export class Simctl {
   }
 
   /**
-   * Tap at coordinates
+   * Tap at coordinates (device logical points). Prefers the native
+   * `simctl io tap` (older Xcodes); falls back to the HID backend
+   * because Xcode 26 removed the io tap/swipe operations.
    */
   static async tap(x: number, y: number, device?: string): Promise<void> {
     const target = device || 'booted';
     const result = await this.exec(['io', target, 'tap', x.toString(), y.toString()]);
-    if (!result.success) {
-      throw new Error(`Failed to tap: ${result.stderr}`);
+    if (result.success) {
+      return;
     }
+    await HID.tap(x, y, device);
   }
 
   /**
-   * Swipe from coordinates to coordinates
+   * Swipe from coordinates to coordinates (device logical points).
+   * Same native-first, HID-fallback strategy as tap().
    */
   static async swipe(x1: number, y1: number, x2: number, y2: number, device?: string): Promise<void> {
     const target = device || 'booted';
     const result = await this.exec(['io', target, 'swipe', x1.toString(), y1.toString(), x2.toString(), y2.toString()]);
-    if (!result.success) {
-      throw new Error(`Failed to swipe: ${result.stderr}`);
+    if (result.success) {
+      return;
     }
+    await HID.swipe(x1, y1, x2, y2, device);
+  }
+
+  /**
+   * Type text into the focused element. No simctl equivalent exists,
+   * so this always goes through the HID backend.
+   */
+  static async typeText(text: string): Promise<void> {
+    await HID.typeText(text);
   }
 
   /**
